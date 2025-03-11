@@ -6,8 +6,8 @@ cmake_minimum_required(VERSION 3.23)
 project (mFAST VERSION 1.3.0 LANGUAGES CXX)
 
 # options to build tests, examples and packages
-option(BUILD_TESTS "Build tests" ON)
-option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_EXAMPLES "Build examples" OFF)
 option(BUILD_PACKAGES "Build packages" ON)
 
 # global options

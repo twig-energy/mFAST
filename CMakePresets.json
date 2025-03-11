@@ -1,0 +1,254 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "dev-mode",
+      "hidden": true,
+      "cacheVariables": {
+        "TWIG_EEX_DEVELOPER_MODE": "ON",
+        "VCPKG_MANIFEST_FEATURES": "test"
+      },
+      "inherits": [
+        "default"
+      ]
+    },
+    {
+      "name": "vcpkg",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy-19;--header-filter=^${sourceDir}/(include|src|source|test)"
+      }
+    },
+    {
+      "name": "clang-19",
+      "hidden": true,
+      "environment": {
+        "CXX": "clang++-19",
+        "CC": "clang-19",
+        "LLVM_SYMBOLIZER_PATH": "llvm-symbolizer-19"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fcf-protection=full -fstack-clash-protection -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast",
+        "LLVM_COV_COMMAND": "llvm-cov-19",
+        "LLVM_PROFDATA_COMMAND": "llvm-profdata-19"
+      }
+    },
+    {
+      "name": "gcc-14",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fcf-protection=full -fstack-clash-protection -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast -Wno-stringop-overflow"
+      },
+      "environment": {
+        "CXX": "g++-14",
+        "CC": "gcc-14"
+      }
+    },
+    {
+      "name": "ci-std",
+      "description": "This preset makes sure the project actually builds with at least the specified standard",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_EXTENSIONS": "OFF",
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+      }
+    },
+    {
+      "name": "flags-unix",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_EXE_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now",
+        "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now"
+      }
+    },
+    {
+      "name": "ci-unix",
+      "generator": "Ninja",
+      "hidden": true,
+      "inherits": [
+        "flags-unix",
+        "ci-std"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "ci-linux",
+      "hidden": true,
+      "inherits": [
+        "ci-unix"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux-release",
+        "VCPKG_HOST_TRIPLET": "x64-linux-release"
+      }
+    },
+    {
+      "name": "coverage-linux",
+      "inherits": [
+        "clang-19",
+        "dev-mode",
+        "ci-linux"
+      ],
+      "hidden": true,
+      "cacheVariables": {
+        "ENABLE_COVERAGE": "ON",
+        "CODE_COVERAGE": "ON",
+        "CMAKE_BUILD_TYPE": "Coverage",
+        "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g -fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_EXE_LINKER_FLAGS_COVERAGE": "-fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "-fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_MAP_IMPORTED_CONFIG_COVERAGE": "Coverage;RelWithDebInfo;Release;Debug;",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "sanitize-linux",
+      "inherits": [
+        "ci-linux"
+      ],
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Sanitize",
+        "CMAKE_CXX_FLAGS_SANITIZE": "-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common",
+        "CMAKE_MAP_IMPORTED_CONFIG_SANITIZE": "Sanitize;RelWithDebInfo;Release;Debug;",
+        "VCPKG_TARGET_TRIPLET": "sanitize-x64-linux",
+        "VCPKG_HOST_TRIPLET": "sanitize-x64-linux"
+      }
+    },
+    {
+      "name": "sanitize-thread-linux",
+      "inherits": [
+        "ci-linux"
+      ],
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Sanitize",
+        "CMAKE_CXX_FLAGS_SANITIZE": "-O2 -g -fsanitize=thread",
+        "CMAKE_MAP_IMPORTED_CONFIG_SANITIZE": "Sanitize;RelWithDebInfo;Release;Debug;"
+      }
+    },
+    {
+      "name": "ci-build",
+      "hidden": true,
+      "inherits": "default"
+    },
+    {
+      "name": "ci-coverage",
+      "inherits": [
+        "ci-build",
+        "coverage-linux",
+        "vcpkg"
+      ],
+      "cacheVariables": {
+        "CMAKE_COVERAGE_OUTPUT_DIRECTORY": "${sourceDir}/build/ccov"
+      }
+    },
+    {
+      "name": "ci-vcpkg",
+      "description": "build which does not add the vcpkg::test feature and therefore packages",
+      "inherits": [
+        "ci-build",
+        "ci-linux",
+        "vcpkg",
+        "clang-19"
+      ]
+    },
+    {
+      "name": "ci-sanitize",
+      "inherits": [
+        "ci-build",
+        "sanitize-linux",
+        "dev-mode",
+        "vcpkg",
+        "clang-19"
+      ]
+    },
+    {
+      "name": "ci-sanitize-thread",
+      "inherits": [
+        "ci-build",
+        "sanitize-thread-linux",
+        "dev-mode",
+        "vcpkg",
+        "clang-19"
+      ]
+    },
+    {
+      "name": "ci-ubuntu-clang-19",
+      "inherits": [
+        "ci-build",
+        "ci-linux",
+        "vcpkg",
+        "dev-mode",
+        "clang-19"
+      ]
+    },
+    {
+      "name": "ci-ubuntu-gcc-14",
+      "inherits": [
+        "ci-build",
+        "ci-linux",
+        "vcpkg",
+        "dev-mode",
+        "gcc-14"
+      ]
+    },
+    {
+      "name": "release",
+      "inherits": [
+        "ci-build",
+        "ci-linux",
+        "vcpkg",
+        "gcc-14"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "sanitize",
+      "inherits": "default",
+      "environment": {
+        "ASAN_OPTIONS": "strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:detect_leaks=1",
+        "UBSAN_OPTIONS": "print_stacktrace=1"
+      }
+    },
+    {
+      "name": "sanitize-thread",
+      "inherits": "default",
+      "environment": {
+        "TSAN_OPTIONS": "suppressions=${sourceDir}/sanitize-thread-suppressions.txt"
+      }
+    }
+  ]
+}
